@@ -8,18 +8,17 @@ import matplotlib.pyplot as plt
 
 
 def getFilmList(user):
-    print("Getting film list for "+user+"...")
+    print(f"Getting film list for {user}...")
     filmList=[]
     i=1
     while True:
-        print("Slurping page "+str(i))
-        content = requests.get("https://letterboxd.com/"+user+"/films/page/"+str(i)).content.decode("utf-8")
+        print("Slurping account page "+str(i))
+        content = requests.get(f"https://letterboxd.com/{user}/films/page/{i}/").content.decode("utf-8")
         i+=1
         contentsplit = content.split("data-target-link=\"/film/")
         for section in contentsplit:
             if "DOCTYPE html" in section: continue
             link = section.split("/")[0]
-            # print(link)
             filmList.append(link)
         if ">Older</a>" not in content: break
     print("End of film list reached.")
@@ -153,7 +152,8 @@ ratings=[]
 
 
 def main():
-    filmList = getFilmList("k0gg")
+    user = input("Enter letterboxd username > ")
+    filmList = getFilmList(user)
     print("Crawling films...")
     for film in filmList:
         try:

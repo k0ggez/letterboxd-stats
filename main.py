@@ -1,60 +1,95 @@
+"""
+webscraper for letterboxd that takes your exported account data csv and generates statistics
+"""
 import requests
 import json
+import numpy
 import matplotlib.pyplot as plt
-from collections import Counter
 
 
 def getFilmList(user):
-    print(f"Getting film list for {user}...")
+    print("Getting film list for "+user+"...")
     filmList=[]
     i=1
     while True:
-        print("Slurping account page "+str(i))
-        content = requests.get(f"https://letterboxd.com/{user}/films/page/{i}/").content.decode("utf-8")
+        print("Slurping page "+str(i))
+        content = requests.get("https://letterboxd.com/"+user+"/films/page/"+str(i)).content.decode("utf-8")
         i+=1
         contentsplit = content.split("data-target-link=\"/film/")
         for section in contentsplit:
             if "DOCTYPE html" in section: continue
             link = section.split("/")[0]
+            # print(link)
             filmList.append(link)
         if ">Older</a>" not in content: break
     print("End of film list reached.")
     return filmList
 
 
-def getFromJSON(jsonData, category):
-    try:
-        list=[]
-        for item in jsonData[category]:
-            list.append(item)
-        return list
-    except:
-        print(f"error in scraping JSON data for that movie's {category}")
+def getActors(jsonData):
+    actors=[]
+    for actor in jsonData['actors']:
+        actors.append(actor['name'])
+    return actors
 
 
-def getFromHTML(content, fingerprint):
-    list = []
-    sections = content.split(fingerprint)
+def getDirectors(jsonData):
+    directors=[]
+    for director in jsonData['director']:
+        directors.append(director['name'])
+    return directors
+
+
+def getGenres(jsonData):
+    genres=[]
+    for genre in jsonData['genre']:
+        genres.append(genre)
+    return genres
+
+
+def getWriters(content):
+    writers = []
+    sections = content.split("<a href=\"/writer/")
     sections.pop(0)
     for section in sections:
-        item = section.split('>')[1].split('<')[0]
-        list.append(item)
-    return list
+        writer = section.split('>')[1].split('<')[0]
+        writers.append(writer)
+    return writers
+
+
+def getCinematographers(content):
+    cinematographers = []
+    sections = content.split("<a href=\"/cinematography/")
+    sections.pop(0)
+    for section in sections:
+        cinematographer = section.split('>')[1].split('<')[0]
+        cinematographers.append(cinematographer)
+    return cinematographers
+
+
+def getThemes(content):
+    themes = []
+    sections = content.split("/by/best-match/")
+    sections.pop(0)
+    for section in sections:
+        theme = section.split('>')[1].split('<')[0]
+        themes.append(theme)
+    return themes
 
 
 def crawlFilm(filmName):
-    content = requests.get(f"https://letterboxd.com/film/{filmName}").content.decode("utf-8")
+    content = requests.get("https://letterboxd.com/film/"+filmName).content.decode("utf-8")
     jsonData = json.loads(content.split("/* <![CDATA[ */")[1].split("/* ]]> */")[0]) ## capturing convinient CDATA file in footer
     print(jsonData['name'])
 
     year = jsonData['releasedEvent'][0]['startDate']
     runtime = content.split("text-link text-footer\">")[1].split("&nbsp;mins")[0].strip()
-    directors = getFromJSON(jsonData, 'director')
-    actors = getFromJSON(jsonData, 'actors')
-    writers = getFromHTML(content, '<a href=\"/writer/')
-    cinematographers = getFromHTML(content, '<a href=\"/cinematography/')
-    genres = getFromJSON(jsonData, 'genre')
-    themes = getFromHTML(content, '/by/best-match/')
+    directors = getDirectors(jsonData)
+    actors = getActors(jsonData)
+    writers = getWriters(content)
+    cinematographers = getCinematographers(content)
+    genres = getGenres(jsonData)
+    themes = getThemes(content)
     rating = jsonData['aggregateRating']['ratingValue']
 
     for actor in actors:
@@ -118,8 +153,7 @@ ratings=[]
 
 
 def main():
-    user = input("Enter letterboxd username > ")
-    filmList = getFilmList(user)
+    filmList = getFilmList("k0gg")
     print("Crawling films...")
     for film in filmList:
         try:
@@ -127,7 +161,6 @@ def main():
         except:
             print("error crawling that film")
     print("Finished crawling films.")
-
     print("Calculating stats now...")
 
     print("\n--TOP ACTORS--")

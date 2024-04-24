@@ -122,13 +122,13 @@ def crawlFilm(filmName):
         themesDic.update({theme:count+1})
 
     global years
-    years.append(year)
+    years.append(int(year))
 
     global runtimes
-    runtimes.append(runtime)
+    runtimes.append(int(runtime))
 
     global ratings
-    ratings.append(rating)
+    ratings.append(float(rating))
 
 
 def sortNprintDic(dic):
@@ -208,7 +208,11 @@ def main():
     ax3.set_xlabel('rating from 1-5')
     ax3.set_ylabel('Frequency')
 
+    print(f"\nTOTAL WATCH TIME: {sum(runtimes)}")
     plt.show()
+
+    
+
 
 
 main()

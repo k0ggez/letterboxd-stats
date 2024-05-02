@@ -81,15 +81,17 @@ def crawlFilm(filmName):
     jsonData = json.loads(content.split("/* <![CDATA[ */")[1].split("/* ]]> */")[0]) ## capturing convinient CDATA file in footer
     print(jsonData['name'])
 
-    year = jsonData['releasedEvent'][0]['startDate']
-    runtime = content.split("text-link text-footer\">")[1].split("&nbsp;mins")[0].strip()
+    year = int(jsonData['releasedEvent'][0]['startDate'])
+    runtime = int(content.split("text-link text-footer\">")[1].split("&nbsp;mins")[0].strip())
     directors = getDirectors(jsonData)
     actors = getActors(jsonData)
     writers = getWriters(content)
     cinematographers = getCinematographers(content)
     genres = getGenres(jsonData)
     themes = getThemes(content)
-    rating = jsonData['aggregateRating']['ratingValue']
+    rating = float(jsonData['aggregateRating']['ratingValue'])
+
+    if runtime > 4*60: return ## attempts to weed tv shows out by ignoring runtimes longer than 4 hours
 
     for actor in actors:
         global actorsDic
@@ -122,13 +124,13 @@ def crawlFilm(filmName):
         themesDic.update({theme:count+1})
 
     global years
-    years.append(int(year))
+    years.append(year)
 
     global runtimes
-    runtimes.append(int(runtime))
+    runtimes.append(runtime)
 
     global ratings
-    ratings.append(float(rating))
+    ratings.append(rating)
 
 
 def sortNprintDic(dic):
